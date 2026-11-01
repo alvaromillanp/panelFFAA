@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modernización militar de España, 2026 a 2040</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface-1: #fcfcfb;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --wash: rgba(11,11,11,0.05);
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+    --official: #2a78d6; --lr: #e87ba4;
+    --critical: #d03b3b; --warning: #fab219;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface-1: #1a1a19;
+      --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+      --grid: #2c2c2a; --axis: #383835;
+      --border: rgba(255,255,255,0.10); --wash: rgba(255,255,255,0.06);
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+      --official: #3987e5; --lr: #d55181;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --grid: #2c2c2a; --axis: #383835;
+    --border: rgba(255,255,255,0.10); --wash: rgba(255,255,255,0.06);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --official: #3987e5; --lr: #d55181;
+  }
+
+  * { box-sizing: border-box; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary); vertical-align: middle; }
+  .chip i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .official-zone { border-left: 4px solid var(--official); padding-left: 20px; margin-top: 40px; }
+  .official-zone h2 { margin-top: 0; padding-top: 4px; }
+  html, body { margin: 0; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .viz-root { background: var(--page); color: var(--text-primary); min-height: 100vh; padding: 32px 24px 64px; }
+  .wrap { max-width: 1240px; margin: 0 auto; }
+  header.top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  h1 { font-size: 26px; font-weight: 650; margin: 0 0 6px; letter-spacing: -0.01em; }
+  h2 { font-size: 19px; font-weight: 650; margin: 40px 0 4px; }
+  h3 { font-size: 14px; font-weight: 600; margin: 0 0 2px; }
+  p.sub, .sub { color: var(--text-secondary); font-size: 14px; margin: 0 0 16px; line-height: 1.45; }
+  .muted { color: var(--text-muted); font-size: 12px; }
+  .btn { font: inherit; font-size: 13px; color: var(--text-primary); background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+  .btn:hover { background: var(--wash); }
+  .btn[aria-pressed="true"] { font-weight: 650; box-shadow: inset 0 -2px 0 var(--text-primary); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-top: 20px; }
+  .tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .tile .label { font-size: 13px; color: var(--text-secondary); }
+  .tile .value { font-size: 26px; font-weight: 650; margin-top: 6px; }
+  .tile .note { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.35; }
+  .tile.hero .value { font-size: 44px; line-height: 1.05; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
+  .grid.two { grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px 16px 10px; min-width: 0; }
+  .card .chart { width: 100%; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 0 4px; font-size: 12px; color: var(--text-secondary); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .legend i.est { opacity: .5; }
+  .legend i.whisk { width: 2px; height: 12px; border-radius: 0; background: var(--text-secondary); }
+  details { margin-top: 6px; font-size: 12px; }
+  summary { cursor: pointer; color: var(--text-secondary); padding: 4px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--grid); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--text-secondary); font-weight: 600; }
+  .note-line { font-size: 12px; color: var(--text-muted); margin: 4px 0 6px; line-height: 1.4; }
+
+  svg text { font-family: inherit; }
+  .axis-text { fill: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .val-text { fill: var(--text-primary); font-size: 11px; font-weight: 600; }
+  .lab-text { fill: var(--text-secondary); font-size: 12px; }
+  .mark { cursor: default; transition: opacity .12s; outline: none; }
+  .mark:hover, .mark:focus-visible { filter: brightness(1.12); }
+  .mark:focus-visible { stroke: var(--text-primary); stroke-width: 1.5; }
+
+  #tooltip { position: fixed; pointer-events: none; z-index: 10; background: var(--surface-1); color: var(--text-primary); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.14); max-width: 300px; display: none; line-height: 1.4; }
+  #tooltip .tt-title { color: var(--text-secondary); margin-bottom: 4px; }
+  #tooltip .tt-row { display: flex; align-items: center; gap: 8px; }
+  #tooltip .tt-row b { font-weight: 650; min-width: 36px; }
+  #tooltip .tt-key { width: 12px; height: 2px; border-radius: 1px; flex: none; }
+  #tooltip .tt-foot { color: var(--text-muted); margin-top: 4px; }
+
+  .gaps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .gap { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; font-size: 13px; line-height: 1.45; color: var(--text-secondary); }
+  .gap strong { color: var(--text-primary); display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .gap .ico { width: 16px; height: 16px; border-radius: 50%; background: var(--critical); color: #fff; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .gap .ico.warn { background: var(--warning); color: #0b0b0b; }
+  footer { margin-top: 40px; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <h1>Modernización militar de España, 2026 a 2040</h1>
+    <p class="sub">Entregas de unidades y totales de fuerza proyectados para el Ejército de Tierra, la Armada y el Ejército del Aire y del Espacio, además del gasto en defensa. Elaborado a partir de fuentes públicas. Última actualización: 1 de noviembre de 2026. No es una publicación oficial del Ministerio de Defensa. Las cifras de 2026 proceden casi siempre de fuentes; los años posteriores son sobre todo estimaciones basadas en calendarios contratados y bajas anunciadas.</p>
+  </div>
+  <div class="row">
+    <button class="btn" id="themeBtn" type="button">Modo claro/oscuro</button>
+  </div>
+</header>
+
+<section class="tiles" aria-label="Cifras principales">
+  <div class="tile hero"><div class="label">Gasto en defensa 2026 (estimación)</div><div class="value">35.400 M€</div><div class="note">Aproximadamente el 2,0% del PIB, método OTAN</div></div>
+  <div class="tile"><div class="label">Programas de modernización de 2025</div><div class="value">34.000 M€</div><div class="note">Entre 31 y 35 programas, aprobados en 2025, hasta 2037</div></div>
+  <div class="tile"><div class="label">Préstamos a Navantia, 27 oct. 2026</div><div class="value">2.196 M€</div><div class="note">6 corbetas, modernización de cazaminas y sostenimiento de la flota</div></div>
+  <div class="tile"><div class="label">Préstamo SAFE de la UE</div><div class="value">1.000 M€</div><div class="note">Asignación máxima, febrero de 2026</div></div>
+  <div class="tile"><div class="label">Efectivos, finales de 2025</div><div class="value">128.305</div><div class="note">823 menos que en 2024, pese al objetivo de crecimiento</div></div>
+</section>
+
+
+<h2>Gasto en defensa</h2>
+<p class="sub">España alcanzó la referencia del 2% de la OTAN en 2025 mediante créditos extraordinarios y préstamos sin interés a la industria, sin nuevos Presupuestos. El Estado sigue funcionando con los Presupuestos de 2023 prorrogados.</p>
+<div class="tiles" style="margin:0 0 16px" aria-label="Objetivo OTAN del 3,5% del PIB en euros">
+  <div class="tile"><div class="label"><span class="chip"><i style="background:var(--lr)"></i>Objetivo OTAN 3,5%</span> si se cumpliera hoy (2026)</div><div class="value">≈62.000 M€</div><div class="note">Frente a ≈35.400 M€ de gasto estimado: +26.600 M€ al año</div></div>
+  <div class="tile"><div class="label"><span class="chip"><i style="background:var(--lr)"></i>Objetivo OTAN 3,5%</span> en 2035 (estimación)</div><div class="value">≈86.000 M€</div><div class="note">Entre 80.000 y 93.000 M€, según el crecimiento</div></div>
+  <div class="tile"><div class="label"><span class="chip"><i style="background:var(--official)"></i>Compromiso del 2,1%</span> en 2035</div><div class="value">≈52.000 M€</div><div class="note">Entre 48.000 y 56.000 M€. Diferencia con el 3,5%: ≈34.000 M€ al año</div></div>
+  <div class="tile"><div class="label">PIB de España</div><div class="value">1,77 → 2,46 billones €</div><div class="note">Escenario base 2026–2035: crecimiento real del 1,6% al 1,8% más un 2% de inflación</div></div>
+</div>
+<div class="grid two">
+  <div class="card"><h3>Gasto en defensa, millones de €</h3><div class="muted">Método OTAN. 2026 es una estimación.</div><div class="chart" id="c-spend"></div><div id="t-spend"></div></div>
+  <div class="card"><h3>Gasto en defensa, % del PIB</h3><div class="muted">La línea fina marca la referencia del 2% de la OTAN</div><div class="chart" id="c-gdp"></div><div id="t-gdp"></div></div>
+  <div class="card"><h3>Programas de modernización de 2025 por rama, millones de €</h3><div class="muted">Valores desglosados de la lista de programas de 2025. Suman unos 27.400 M€ de los 34.000 M€ oficiales porque algunos programas no tienen valor publicado.</div><div class="chart" id="c-pembranch"></div><div id="t-pembranch"></div></div>
+  <div class="card"><h3>Mayores programas, millones de €</h3><div class="muted">Valor del contrato o del programa. Las bases difieren (techo de gasto, adjudicación, programa total), así que deben leerse como orden de magnitud.</div><div class="chart" id="c-programs"></div><div id="t-programs"></div></div>
+  <div class="card"><h3>Lo que supone para España el objetivo del 3,5% de la OTAN, millones de €</h3><div class="muted">Senda oficial: aproximadamente el 2,0% en 2026 (estimación de la OTAN) y el compromiso del 2,1% en 2035. Comparación: el objetivo básico del 3,5% del PIB acordado por los aliados en La Haya en junio de 2025, del que España obtuvo flexibilidad. PIB estimado: 1,772 billones € en 2026 (dato de 2025 del INE, 1,690 billones €, más el crecimiento previsto por el FMI y un 2,7% de inflación). Para 2035, 2,455 billones € en el escenario base; el bigote muestra el rango entre crecimiento lento y rápido, de 2,296 a 2,645 billones €.</div><div class="chart" id="c-eur"></div><div class="note-line">El 3,5% hoy serían unos 62.000 M€, 26.600 M€ (un 75%) más que los 35.400 M€ que se estima que España gastará en 2026. En 2035 serían unos 86.000 M€ (entre 80.000 y 93.000 M€), unos 34.000 M€ al año más que el compromiso del 2,1%.</div><div id="t-eur"></div></div>
+</div>
+
+<h2>Totales de fuerza por rama</h2>
+<p class="sub">El filtro de rama se aplica a los totales de fuerza y al calendario de entregas que aparecen debajo.</p>
+<div class="row" role="group" aria-label="Filtro de rama" style="margin-bottom:14px">
+  <button class="btn" data-branch="army" type="button">Ejército de Tierra</button>
+  <button class="btn" data-branch="navy" type="button">Armada</button>
+  <button class="btn" data-branch="air" type="button">Ejército del Aire y del Espacio</button>
+</div>
+
+<div class="official-zone">
+<h2><span class="chip"><i style="background:var(--official)"></i>Plan oficial</span> Totales de fuerza proyectados</h2>
+<p class="sub" id="branchSub"></p>
+<div class="tiles" id="branchTiles" style="margin:0 0 16px"></div>
+<div class="legend" aria-label="Clave de lectura" style="margin-bottom:12px">
+  <span><i style="background:var(--text-secondary)"></i>Relleno sólido: dato con fuente</span>
+  <span><i class="est" style="background:var(--text-secondary)"></i>Relleno más claro y «est.» bajo el año: estimación</span>
+  <span><i class="whisk"></i>Bigote: rango de la estimación (mínimo a máximo)</span>
+</div>
+<div class="grid" id="branchCharts"></div>
+
+<h2><span class="chip"><i style="background:var(--official)"></i>Plan oficial</span> Calendario de entregas</h2>
+<p class="sub">Plazos de entrega de los principales programas, filtrados por la rama seleccionada arriba. Las barras más claras son plazos estimados o programas sin contrato de construcción.</p>
+<div class="card"><div class="chart" id="c-gantt"></div><div id="t-gantt"></div></div>
+</div>
+
+
+<h2>Carencias de capacidad hasta 2040</h2>
+<div class="gaps">
+  <div class="gap"><strong><span class="ico">!</span>Número de cazas después de 2035</strong>La flota cae a unos 100–115 Eurofighter cuando se retire el EF-18M. No hay ningún caza puente encargado, y el caza conjunto del FCAS se hundió en junio de 2026.</div>
+  <div class="gap"><strong><span class="ico">!</span>Aviación embarcada</strong>Los Harrier vuelan hasta aproximadamente 2032 gracias a piezas de repuesto. El F-35B está descartado, así que el Juan Carlos I probablemente no llevará aviones de combate durante más de 10 años.</div>
+  <div class="gap"><strong><span class="ico warn">!</span>Contracarro y artillería de cohetes</strong>El Spike LR2 y el SILAM se cancelaron en septiembre de 2025 por la política de prescindir de proveedores israelíes. No se han elegido sustitutos.</div>
+  <div class="gap"><strong><span class="ico warn">!</span>Blindados de cadenas</strong>El contrato de 394 VAC está bloqueado por el precio, así que el M113 seguirá en servicio durante la década de 2030.</div>
+  <div class="gap"><strong><span class="ico warn">!</span>Alerta temprana aerotransportada</strong>No existe ningún programa de aviones de alerta temprana.</div>
+  <div class="gap"><strong><span class="ico warn">!</span>Riesgo electoral</strong>Las elecciones generales del 29 de noviembre de 2026 pueden frenar los 14 o 15 programas de 2026 pendientes, la segunda serie del S-80 y el contrato de construcción de las corbetas.</div>
+</div>
+
+<footer>
+  Fuentes: referencias del Consejo de Ministros (La Moncloa), defensa.gob.es, Navantia, Airbus, Indra, Infodefensa, El Español (Observatorio de Defensa), El País, Janes, OTAN y EUR-Lex. Cuando las fuentes discrepan (por ejemplo, en el número de baterías Patriot, las cifras de M113 y BMR o la fecha final del Halcón II), el gráfico usa la cifra más fiable y el rango cubre las demás. Las proyecciones de 2030 a 2040 y las estimaciones del PIB de 2035 se basan en calendarios contratados y previsiones del FMI, y cambiarán a medida que evolucionen los programas.
+</footer>
+
+</div>
+</div>
+<div id="tooltip" role="tooltip"></div>
+
+<script>
+// ---------- Datos ----------
+const YEARS = [2026, 2030, 2035, 2040];
+const BRANCH_COLOR = { Tierra: '--s1', Armada: '--s2', Aire: '--s3', Conjunto: '--s4' };
+const BRANCH_LABEL = { Tierra: 'Ejército de Tierra', Armada: 'Armada', Aire: 'Ejército del Aire y del Espacio', Conjunto: 'Conjunto' };
+
+// Gasto en millones de euros
+const SPEND = [
+  { y: 2024, v: 22700, est: false },
+  { y: 2025, v: 33100, est: false },
+  { y: 2026, v: 35400, est: true },
+];
+const GDP = [
+  { y: 2022, v: 1.16, est: false }, { y: 2023, v: 1.24, est: false }, { y: 2024, v: 1.42, est: false },
+  { y: 2025, v: 2.00, est: false }, { y: 2026, v: 2.00, est: true },
+];
+const PEM_BRANCH = [
+  { name: 'Ejército de Tierra', key: 'Tierra', v: 9330, note: 'Obuses, mando y control antiaéreo, Pizarro, lanzapuentes, vehículos de reconocimiento' },
+  { name: 'Conjunto', key: 'Conjunto', v: 8100, note: 'H145M, NH90 fase 3, radios, PAZ II, mando y control, drones, guerra electrónica' },
+  { name: 'Ejército del Aire', key: 'Aire', v: 5650, note: 'Hürjet, C295, NGWS/FCAS, H175M' },
+  { name: 'Armada', key: 'Armada', v: 4270, note: 'Modernización de las F-100, buque de aprovisionamiento, vehículo anfibio' },
+];
+const PROGRAMS = [
+  { name: 'Transporte A400M', b: 'Aire', v: 6580, basis: 'Presupuesto total del programa' },
+  { name: 'Fragatas F-110 (5)', b: 'Armada', v: 4770, basis: 'Orden de ejecución tras el aumento de dic. 2025' },
+  { name: 'Obuses K9 de cadenas (128)', b: 'Tierra', v: 4550, basis: 'Adjudicación a Indra y EM&E' },
+  { name: 'Eurofighter Halcón II (25)', b: 'Aire', v: 4000, basis: 'Valor aproximado del programa' },
+  { name: 'Modernización F-100 (5)', b: 'Armada', v: 3200, basis: 'Programa completo de modernización' },
+  { name: 'Entrenador Hürjet (30)', b: 'Aire', v: 3120, basis: 'Consejo de Ministros, IVA incluido' },
+  { name: 'Obuses sobre ruedas (86)', b: 'Tierra', v: 2690, basis: 'Valor del contrato' },
+  { name: 'Eurofighter Halcón I (20)', b: 'Aire', v: 2640, basis: 'Valor del contrato' },
+  { name: 'Dragón 8x8 fase 1 (348)', b: 'Tierra', v: 2610, basis: 'Techo ampliado, abr. 2023' },
+  { name: 'Helicópteros H145M (50)', b: 'Tierra', v: 1980, basis: 'Valor del contrato' },
+  { name: 'VAC de cadenas (394)', b: 'Tierra', v: 1970, basis: 'Valor del contrato (bloqueado)' },
+  { name: 'Eurodrone (parte española)', b: 'Aire', v: 1900, basis: 'Parte española aproximada' },
+  { name: 'Corbeta Europea de Patrulla (6)', b: 'Armada', v: 1790, basis: 'Préstamo a Navantia, oct. 2026' },
+  { name: 'NH90 fase 3 (31)', b: 'Conjunto', v: 1790, basis: 'Valor del programa' },
+  { name: 'A330 MRTT+ (3)', b: 'Aire', v: 1700, basis: 'Parte española de la compra conjunta' },
+  { name: 'C295 patrulla marítima (16)', b: 'Aire', v: 1700, basis: 'Valor del contrato' },
+  { name: 'C2 antiaéreo COAAAS', b: 'Tierra', v: 1690, basis: 'Adjudicación a Indra' },
+  { name: 'C295 de transporte (18)', b: 'Aire', v: 1560, basis: 'Consejo de Ministros' },
+  { name: 'Baterías Patriot', b: 'Tierra', v: 1450, basis: 'Contrato FMS con EE. UU.' },
+  { name: 'Modernización Tigre MkIII (18)', b: 'Tierra', v: 1390, basis: 'Techo del programa' },
+];
+
+// Cada categoría: series apiladas por año. range = [mín, máx] del total por año (null = igual al total).
+// est = marca de estimación por año. Un valor null en todas las series significa sin proyección.
+const BRANCHES = {
+  army: {
+    label: 'Ejército de Tierra',
+    sub: 'El Ejército de Tierra recibe la mayor parte de los programas de 2025: nuevos obuses, VCR Dragón 8x8, defensa antiaérea y 50 helicópteros H145M. Los carros de combate, los vehículos de cadenas, la artillería de cohetes y los misiles contracarro son los puntos débiles.',
+    tiles: [
+      ['Dragón 8x8 entregados', '119', 'De 348 pedidos, todos antes de 2028'],
+      ['Obuses autopropulsados en 2035', '214', '128 K9 de cadenas y 86 sobre ruedas'],
+      ['Helicópteros H145M', '50', 'Entregas de 2026 a 2035'],
+      ['Baterías Patriot en 2035', '4', 'Entregas no antes de 2030'],
+    ],
+    cats: [
+      { title: 'Carros de combate', note: 'Supone que se aprueban la modernización del Leopard 2E y la compra del 2A8. Sin el 2A8, 219.',
+        series: [['Leopard 2E', [219, 219, 219, 219]], ['Leopard 2A4, luego 2A8', [55, 51, 51, 51]]],
+        range: [null, null, [219, 270], [260, 280]], est: [0, 1, 1, 1] },
+      { title: 'Vehículos blindados de ruedas', note: 'Las fases 2 y 3 del Dragón no están contratadas. Las cifras de BMR y VEC varían según la fuente.',
+        series: [['Dragón 8x8', [130, 348, 525, 825]], ['BMR y VEC (heredados)', [780, 350, 50, 0]]],
+        range: [null, [648, 748], [450, 700], [650, 1000]], est: [0, 1, 1, 1] },
+      { title: 'Transportes oruga acorazados', note: 'El contrato del VAC está bloqueado por el precio. En 2026, las cifras de M113 oscilan entre 433 y 1.200 según la fuente.',
+        series: [['M113 (heredado)', [800, 650, 250, 0]], ['VAC (ASCOD)', [0, 40, 320, 394]]],
+        range: [null, [620, 760], [450, 694], null], est: [0, 1, 1, 1] },
+      { title: 'Vehículos de combate de infantería', note: '121 modernizados al estándar Fase II antes de noviembre de 2031.',
+        series: [['Pizarro', [225, 225, 225, 225]]], range: [null, null, null, null], est: [0, 0, 0, 1] },
+      { title: 'Obuses autopropulsados', note: 'Los contratos del K9 y del obús sobre ruedas terminan en 2034. La cifra de K9 incluye a la Infantería de Marina.',
+        series: [['M109A5E (heredado)', [96, 50, 0, 0]], ['K9 de cadenas', [0, 42, 128, 128]], ['155 mm sobre ruedas', [0, 10, 86, 86]]],
+        range: [null, [85, 115], null, null], est: [0, 1, 0, 1] },
+      { title: 'Lanzacohetes', note: 'El SILAM perdió su base israelí en 2025. España aún busca un socio europeo de diseño.',
+        series: [['SILAM', [0, 2, 12, 18]]], range: [null, [0, 4], null, [12, 24]], est: [0, 1, 1, 1] },
+      { title: 'Lanzadores de misiles contracarro', note: 'El Spike LR2 se canceló. Los totales a partir de 2026 dependen de un sustituto aún no elegido.',
+        series: [['Spike LR, TOW y sucesor', [436, 400, 400, 400]]], range: [null, [350, 450], [350, 450], [350, 450]], est: [0, 1, 1, 1] },
+      { title: 'Baterías Patriot', note: 'Las fuentes difieren entre 3 modernizadas más 1 nueva, o 4 nuevas. Ambas versiones dan 24 lanzadores.',
+        series: [['Patriot', [3, 3, 4, 4]]], range: [null, [3, 4], null, null], est: [0, 1, 0, 1] },
+      { title: 'Helicópteros de ataque', note: 'La línea de modernización MkIII estará lista a finales de 2027 y los primeros aparatos llegarán en 2030. Los retrasos probablemente llevarán el final a 2035–2036.',
+        series: [['Tigre HAD-E', [18, 17, 4, 0]], ['Tigre MkIII', [0, 1, 14, 18]]], range: [null, null, null, null], est: [0, 1, 1, 1] },
+      { title: 'Helicópteros de transporte y utilitarios', note: 'Los modelos heredados son Cougar, Super Puma, EC135 y Bell 212.',
+        series: [['NH90', [15, 29, 39, 40]], ['H145M', [0, 22, 50, 50]], ['CH-47F Chinook', [17, 18, 18, 18]], ['Modelos heredados', [49, 15, 0, 0]]],
+        range: [null, [79, 88], [105, 108], null], est: [0, 1, 1, 1] },
+    ],
+  },
+  navy: {
+    label: 'Armada',
+    sub: 'La Armada renueva casi todas sus clases de superficie hacia mediados de la década de 2030. Las fragatas F-110 sustituyen a las F-80, los S-80 al último Agosta y las nuevas corbetas a los Serviola. Pierde sus únicos aviones de combate hacia 2032.',
+    tiles: [
+      ['Fragatas F-110', '5', 'Entregas de 2028 a 2032, por delante del calendario'],
+      ['Submarinos en 2040', '6', '4 S-80 más una segunda serie de 2'],
+      ['Patrulleros en 2040', '14', '8 BAM más 6 Corbetas Europeas de Patrulla'],
+      ['Harrier después de 2032', '0', 'Sin sustituto tras descartarse el F-35B'],
+    ],
+    cats: [
+      { title: 'Fragatas', note: 'Las F-80 se retiran aproximadamente una por una a medida que llegan las F-110. Dos F-110 de defensa antiaérea están solo en fase de diseño.',
+        series: [['F-100 (defensa antiaérea)', [5, 5, 5, 5]], ['F-80 (propósito general)', [6, 3, 0, 0]], ['F-110 (antisubmarina)', [0, 3, 5, 5]], ['F-110 antiaérea', [0, 0, 0, 1]]],
+        range: [null, null, null, [10, 12]], est: [0, 1, 1, 1] },
+      { title: 'Submarinos', note: 'Entrega del S-82 a finales de noviembre de 2026. S-84 previsto en 2029 o 2030. Segunda serie en construcción desde aproximadamente 2029.',
+        series: [['S-80 Plus', [2, 4, 4, 4]], ['S-70 Agosta (Galerna)', [1, 0, 0, 0]], ['Segunda serie S-80', [0, 0, 0, 2]]],
+        range: [null, null, [4, 5], null], est: [0, 1, 1, 1] },
+      { title: 'Patrulleros de altura y corbetas', note: 'Los BAM 7 y 8 se suman a la flota. Las corbetas tienen financiación pero no contrato de construcción.',
+        series: [['BAM', [6, 8, 8, 8]], ['Serviola (heredado)', [4, 4, 1, 0]], ['Corbeta Europea de Patrulla', [0, 0, 4, 6]]],
+        range: [null, null, [12, 14], null], est: [0, 1, 1, 1] },
+      { title: 'Buques anfibios', note: 'Dos nuevos LHD y tres buques nodriza «LXX» figuran en el plan, pero no se han encargado.',
+        series: [['LHD Juan Carlos I', [1, 1, 1, 1]], ['LPD clase Galicia', [2, 2, 2, 2]], ['Nuevo LHD o LXX', [0, 0, 0, 1]]],
+        range: [null, null, [3, 4], [3, 6]], est: [0, 1, 1, 1] },
+      { title: 'Cazaminas', note: 'Modernización de la clase Segura desde 2029. Seis nuevos cascos previstos después de 2033.',
+        series: [['Clase Segura y sucesores', [6, 6, 6, 6]]], range: [null, null, null, null], est: [0, 1, 1, 1] },
+      { title: 'Buques de aprovisionamiento', note: 'El Martín Álvarez sustituye al Patiño hacia 2030. Hay un petrolero de flota previsto, sin contrato.',
+        series: [['Patiño', [1, 0, 0, 0]], ['Cantabria', [1, 1, 1, 1]], ['Martín Álvarez', [0, 1, 1, 1]], ['Petrolero de flota', [0, 0, 0, 1]]],
+        range: [null, null, [2, 3], [2, 3]], est: [0, 1, 1, 1] },
+      { title: 'Aviones embarcados de ala fija', note: 'Las piezas de 5 aparatos excedentes del Cuerpo de Marines de EE. UU. mantienen los Harrier en vuelo hasta aproximadamente 2032.',
+        series: [['AV-8B Harrier', [11, 11, 0, 0]]], range: [null, null, null, null], est: [0, 1, 1, 1] },
+      { title: 'Helicópteros navales', note: 'La cifra de SH-60B (unos 11) no tiene fuente. El SH-60F es un transporte provisional.',
+        series: [['MH-60R (antisubmarino)', [0, 8, 8, 8]], ['SH-60B (heredado)', [11, 0, 0, 0]], ['NH90 y SH-60F (transporte)', [14, 15, 15, 15]], ['H135 (enseñanza)', [7, 7, 7, 7]]],
+        range: [null, null, null, null], est: [0, 1, 1, 1] },
+    ],
+  },
+  air: {
+    label: 'Ejército del Aire y del Espacio',
+    sub: 'El Ejército del Aire y del Espacio recibe 45 nuevos Eurofighter, 30 entrenadores Hürjet y una renovación completa del transporte, el reabastecimiento en vuelo y la patrulla marítima. El número de cazas baja cuando se retire el EF-18M, y no hay ningún caza sucesor encargado.',
+    tiles: [
+      ['Nuevos Eurofighter', '45', 'Halcón I y II, de 2026 a 2034'],
+      ['Cazas en 2040', '≈100–115', 'Frente a unos 130 hoy'],
+      ['C295 de patrulla marítima', '16', '8 antisubmarinos, 8 de vigilancia y rescate'],
+      ['Aviones cisterna en 2028', '6', '3 MRTT más 3 MRTT+ con Polonia'],
+    ],
+    cats: [
+      { title: 'Cazas', note: 'Ventana de retirada del EF-18M: 2035 a 2040. Se supone la retirada de los Eurofighter Tranche 1 entre 2033 y 2038.',
+        series: [['Eurofighter Tranche 1 a 3', [70, 70, 62, 53]], ['Eurofighter Halcón I y II', [1, 22, 45, 45]], ['EF-18M Hornet', [60, 52, 32, 0]]],
+        range: [null, [140, 150], [130, 150], [98, 115]], est: [0, 1, 1, 1] },
+      { title: 'Entrenadores avanzados', note: 'Se han pedido 30 Hürjet. España estudia comprar 15 más.',
+        series: [['F-5M (heredado)', [19, 0, 0, 0]], ['Hürjet / Saeta II', [0, 18, 30, 30]]],
+        range: [null, [15, 21], [30, 45], [30, 45]], est: [0, 1, 0, 1] },
+      { title: 'Entrenadores básicos', note: 'Entregas completadas.',
+        series: [['PC-21', [40, 40, 40, 40]]], range: [null, null, null, null], est: [0, 0, 1, 1] },
+      { title: 'Cisternas y transporte estratégico', note: 'La flota de A400M se limita a 20. Siete aviones excedentes siguen sin venderse.',
+        series: [['A400M', [15, 20, 20, 20]], ['A330 MRTT', [3, 6, 6, 6]]],
+        range: [[17, 19], null, null, null], est: [0, 0, 1, 1] },
+      { title: 'Transporte táctico', note: '18 nuevos C295 en dos lotes, de 2026 a 2028 y de 2030 a 2032.',
+        series: [['C295', [14, 23, 31, 31]], ['CN235 y C212 (heredados)', [14, 3, 0, 0]]],
+        range: [[27, 29], [25, 28], null, null], est: [0, 1, 0, 1] },
+      { title: 'Patrulla marítima y búsqueda y rescate', note: 'Primer C295 antisubmarino en 2028; el programa termina hacia 2031.',
+        series: [['CN235 VIGMA (heredado)', [8, 0, 0, 0]], ['C295 de vigilancia y rescate', [1, 8, 8, 8]], ['C295 de patrulla antisubmarina', [0, 5, 8, 8]]],
+        range: [null, [12, 14], null, null], est: [0, 1, 0, 1] },
+      { title: 'Aviones contraincendios', note: 'Sin proyección para 2040: la retirada de los aviones heredados depende de un nuevo pedido.',
+        series: [['Canadair CL-215T y CL-415', [15, 12, 9, null]], ['DHC-515', [0, 6, 7, null]]],
+        range: [[14, 17], null, [15, 17], null], est: [0, 1, 1, 1] },
+      { title: 'Drones de gran tamaño', note: 'Solo la parte del Ejército del Aire (4 de los 9 sistemas SIRTAP). Sin proyección para 2040.',
+        series: [['MQ-9A', [4, 4, 4, null]], ['SIRTAP', [0, 10, 12, null]], ['Eurodrone', [0, 1, 12, null]]],
+        range: [null, [13, 19], null, null], est: [0, 1, 1, 1] },
+      { title: 'Helicópteros', note: 'Parte del plan nacional de 100 helicópteros, con entregas de 2027 a 2031.',
+        series: [['NH90', [12, 21, 24, 24]], ['H135 (enseñanza)', [11, 20, 23, 23]], ['H175M (VIP)', [0, 5, 6, 6]], ['Super Puma y Cougar (heredados)', [12, 2, 0, 0]]],
+        range: [null, null, null, null], est: [0, 1, 0, 1] },
+    ],
+  },
+};
+
+const GANTT = {
+  army: [
+    ['Dragón 8x8 fase 1', 2026, 2028, 0, '348 vehículos, 119 entregados a oct. 2026'],
+    ['Modernización del Pizarro', 2026, 2031, 0, '121 vehículos, Santa Bárbara'],
+    ['Helicópteros H145M', 2026, 2035, 0, '50 helicópteros, Airbus'],
+    ['Misiles Mistral 3', 2026, 2033, 1, 'Más de 500 misiles, MBDA'],
+    ['Reconocimiento VERT', 2026, 2030, 0, '100 VAMTAC ST5'],
+    ['NH90 fases 2 y 3', 2026, 2031, 1, 'Unos 25 más para el Ejército de Tierra'],
+    ['CH-47F Chinook n.º 18', 2027, 2027, 0, 'Completa la flota de 18'],
+    ['Modernización NASAMS 2+', 2027, 2028, 0, 'Capacidad completa a finales de 2028'],
+    ['Obuses K9 de cadenas', 2027, 2034, 1, '128 obuses y 152 vehículos de apoyo'],
+    ['Vehículos de cadenas VAC', 2027, 2035, 1, '394 vehículos, contrato bloqueado por el precio'],
+    ['Drones SANTAM', 2028, 2029, 0, '49 sistemas'],
+    ['Obuses sobre ruedas', 2029, 2034, 0, '86 piezas, Indra As Pontes'],
+    ['Baterías Patriot', 2030, 2032, 1, '24 lanzadores, 50 PAC-3 MSE'],
+    ['Tigre MkIII', 2030, 2036, 1, '18 modernizados, con retraso'],
+  ],
+  navy: [
+    ['S-82 Narciso Monturiol', 2026, 2026, 0, 'Entrega a finales de noviembre de 2026'],
+    ['Helicópteros MH-60R', 2026, 2027, 0, '8 helicópteros antisubmarinos'],
+    ['BAM-IS Poseidón', 2027, 2027, 0, 'Buque de rescate de submarinos, primer semestre de 2027'],
+    ['Hidrográficos costeros', 2027, 2029, 1, '2 buques, San Fernando'],
+    ['VACIM anfibio 8x8', 2027, 2030, 0, '34 vehículos para la Infantería de Marina'],
+    ['Fragatas F-110', 2028, 2032, 1, '5 buques: F-111 en 2028, F-112 en 2029'],
+    ['Modernización de las F-100', 2028, 2035, 0, '5 buques, vida útil hasta 2045'],
+    ['S-83 Cosme García', 2028, 2028, 0, 'Finales de 2028, con AIP desde la construcción'],
+    ['S-84 Mateo García de los Reyes', 2029, 2030, 1, 'Las fuentes dicen 2029 o finales de 2030'],
+    ['BAM 7 y 8', 2029, 2030, 1, '2 patrulleros de altura'],
+    ['Modernización cazaminas Segura', 2029, 2033, 1, '6 buques, de 6 a 8 meses cada uno'],
+    ['BAC Martín Álvarez', 2030, 2030, 0, 'Sustituye al Patiño'],
+    ['Buque de inteligencia BAM-AGI', 2030, 2031, 1, 'Solo fase de definición'],
+    ['Corbeta Europea de Patrulla', 2031, 2036, 1, '6 corbetas, financiadas en oct. 2026, sin contrato de construcción'],
+    ['Segunda serie S-80', 2035, 2040, 1, '2 submarinos, en diseño'],
+    ['F-110 antiaérea', 2037, 2039, 1, '2 buques, en diseño, sin contrato'],
+  ],
+  air: [
+    ['Eurofighter Halcón I', 2026, 2030, 0, '20 aviones; el primero se presentó en junio de 2026'],
+    ['Entregas de A400M', 2026, 2029, 0, 'La flota pasa de 14 a 20'],
+    ['C295 de transporte, lote 1', 2026, 2028, 0, 'Unos 9 aviones, sustituyen al CN235'],
+    ['C295 de patrulla marítima', 2026, 2031, 0, '16 aviones; el primero se entregó en junio de 2026'],
+    ['A330 MRTT+', 2027, 2028, 0, '3 aviones, compra conjunta con Polonia'],
+    ['Drones SIRTAP', 2027, 2030, 0, '9 sistemas entre el Ejército de Tierra y el del Aire'],
+    ['NH90, H135, H175M', 2027, 2031, 0, '30 helicópteros para el Ejército del Aire'],
+    ['Entrenador Hürjet', 2028, 2035, 0, '30 aviones, sustituye al F-5M'],
+    ['Contraincendios DHC-515', 2028, 2031, 0, '7 aviones'],
+    ['Eurofighter Halcón II', 2030, 2034, 1, '25 aviones; final en 2033 o 2034'],
+    ['C295 de transporte, lote 2', 2030, 2032, 0, 'Unos 9 aviones, sustituyen al C212'],
+    ['Eurodrone', 2030, 2032, 1, '4 sistemas, 12 aviones'],
+    ['SpainSat NG III y PAZ 2', 2030, 2032, 1, 'Sustituye al destruido SpainSat NG II'],
+    ['Aviones SIGINT', 2031, 2034, 1, '3 aviones, solo en fase de estudio'],
+  ],
+};
+
+// ---------- Utilidades ----------
+const NS = 'http://www.w3.org/2000/svg';
+const css = n => getComputedStyle(document.querySelector('.viz-root')).getPropertyValue(n).trim();
+function s(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function niceMax(v) {
+  if (v <= 0) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v) return m * p;
+  return 10 * p;
+}
+function ticks(max) {
+  const n = 4, step = max / n;
+  return Array.from({ length: n + 1 }, (_, i) => +(i * step).toFixed(2));
+}
+// Formato español: coma decimal, punto de millares
+const fmt = v => v == null ? 'n/d' : (+(+v).toFixed(2)).toLocaleString('es-ES', { maximumFractionDigits: 2, useGrouping: true });
+const fmtEur = v => fmt(Math.round(v)) + ' M€';
+// Barra con extremo redondeado arriba y recta en la base.
+function colPath(x, y, w, h, r) {
+  r = Math.min(r, h, w / 2);
+  if (h <= 0) return '';
+  return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
+}
+function barPath(x, y, w, h, r) { // horizontal, extremo derecho redondeado
+  r = Math.min(r, w, h / 2);
+  if (w <= 0) return '';
+  return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}H${x}Z`;
+}
+
+// ---------- Ventana emergente ----------
+const tip = document.getElementById('tooltip');
+function showTip(evt, title, rows, foot) {
+  tip.replaceChildren();
+  const t = document.createElement('div'); t.className = 'tt-title'; t.textContent = title; tip.appendChild(t);
+  for (const r of rows) {
+    const row = document.createElement('div'); row.className = 'tt-row';
+    if (r.color) { const k = document.createElement('span'); k.className = 'tt-key'; k.style.background = r.color; row.appendChild(k); }
+    const b = document.createElement('b'); b.textContent = r.value; row.appendChild(b);
+    const l = document.createElement('span'); l.textContent = r.label; row.appendChild(l);
+    tip.appendChild(row);
+  }
+  if (foot) { const f = document.createElement('div'); f.className = 'tt-foot'; f.textContent = foot; tip.appendChild(f); }
+  tip.style.display = 'block';
+  moveTip(evt);
+}
+function moveTip(evt) {
+  let x, y;
+  if (evt.clientX !== undefined && evt.type !== 'focus') { x = evt.clientX; y = evt.clientY; }
+  else { const r = evt.target.getBoundingClientRect(); x = r.left + r.width / 2; y = r.top; }
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let left = x + 14, top = y - h - 10;
+  if (left + w > window.innerWidth - 8) left = x - w - 14;
+  if (top < 8) top = y + 16;
+  tip.style.left = left + 'px'; tip.style.top = top + 'px';
+}
+function hideTip() { tip.style.display = 'none'; }
+function bindTip(node, fn) {
+  node.setAttribute('tabindex', '0');
+  node.addEventListener('pointerenter', e => fn(e));
+  node.addEventListener('pointermove', moveTip);
+  node.addEventListener('pointerleave', hideTip);
+  node.addEventListener('focus', e => fn(e));
+  node.addEventListener('blur', hideTip);
+}
+
+// ---------- Vista de tabla ----------
+function table(host, headers, rows) {
+  host.replaceChildren();
+  const d = document.createElement('details');
+  const sm = document.createElement('summary'); sm.textContent = 'Tabla de datos'; d.appendChild(sm);
+  const t = document.createElement('table');
+  const tr = document.createElement('tr');
+  headers.forEach(h => { const th = document.createElement('th'); th.textContent = h; tr.appendChild(th); });
+  t.appendChild(tr);
+  rows.forEach(r => {
+    const row = document.createElement('tr');
+    r.forEach(c => { const td = document.createElement('td'); td.textContent = c; row.appendChild(td); });
+    t.appendChild(row);
+  });
+  d.appendChild(t); host.appendChild(d);
+}
+
+// ---------- Columnas (simples o apiladas, con estimaciones y bigotes de rango) ----------
+function columnChart(host, cfg) {
+  host.replaceChildren();
+  const W = Math.max(280, host.clientWidth), H = cfg.height || 220;
+  const m = { t: 22, r: 8, b: cfg.hasEst ? 34 : 24, l: cfg.left || 38 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const svg = s('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': cfg.aria }, host);
+  const totals = cfg.x.map((_, i) => cfg.series.reduce((a, sr) => a + (sr.d[i] ?? 0), 0));
+  const allNull = cfg.x.map((_, i) => cfg.series.every(sr => sr.d[i] == null));
+  const hiMax = Math.max(...totals, ...(cfg.range || []).map(r => r ? r[1] : 0));
+  const ymax = niceMax(hiMax * 1.05);
+  const y = v => m.t + ih - (v / ymax) * ih;
+  for (const t of ticks(ymax)) {
+    s('line', { x1: m.l, x2: W - m.r, y1: y(t), y2: y(t), stroke: t === 0 ? css('--axis') : css('--grid'), 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg);
+    const tx = s('text', { x: m.l - 6, y: y(t) + 4, 'text-anchor': 'end', class: 'axis-text' }, svg);
+    tx.textContent = fmt(t);
+  }
+  const band = iw / cfg.x.length, bw = Math.min(24, band * 0.5);
+  cfg.x.forEach((xv, i) => {
+    const cx = m.l + band * i + band / 2, x0 = cx - bw / 2;
+    const est = cfg.est && cfg.est[i];
+    const lx = s('text', { x: cx, y: H - (cfg.hasEst ? 18 : 8), 'text-anchor': 'middle', class: 'axis-text' }, svg);
+    lx.textContent = xv;
+    if (est) { const e = s('text', { x: cx, y: H - 5, 'text-anchor': 'middle', class: 'axis-text' }, svg); e.textContent = 'est.'; }
+    if (allNull[i]) {
+      const n = s('text', { x: cx, y: y(0) - 8, 'text-anchor': 'middle', class: 'axis-text' }, svg); n.textContent = 'sin proy.';
+      return;
+    }
+    let acc = 0;
+    const visible = cfg.series.map((sr, k) => ({ sr, k, v: sr.d[i] ?? 0 })).filter(o => o.v > 0);
+    visible.forEach((o, j) => {
+      const top = j === visible.length - 1;
+      const y1 = y(acc + o.v), y0 = y(acc);
+      const gap = j > 0 ? 2 : 0; // separación de 2 px entre segmentos apilados
+      const h = Math.max(0, y0 - y1 - gap);
+      const color = css(o.sr.color);
+      const p = top ? colPath(x0, y1, bw, h, 4) : `M${x0},${y1}h${bw}v${h}h${-bw}Z`;
+      if (h > 0) {
+        const path = s('path', { d: p, fill: color, opacity: est ? 0.55 : 1, class: 'mark',
+          'aria-label': `${o.sr.name}, ${xv}: ${fmt(o.v)}` }, svg);
+        bindTip(path, e => showTip(e, `${cfg.title} · ${xv}${est ? ' (estimación)' : ''}`,
+          cfg.series.map(sr => ({ color: css(sr.color), value: fmt(sr.d[i]), label: sr.name })).reverse(),
+          cfg.series.length > 1 ? `Total ${fmt(totals[i])}${cfg.range && cfg.range[i] ? `, rango de ${fmt(cfg.range[i][0])} a ${fmt(cfg.range[i][1])}` : ''}`
+            : (cfg.range && cfg.range[i] ? `Rango de ${fmt(cfg.range[i][0])} a ${fmt(cfg.range[i][1])}` : (cfg.foot ? cfg.foot(i) : ''))));
+      }
+      acc += o.v;
+    });
+    const r = cfg.range && cfg.range[i];
+    let labelY = y(totals[i]) - 6;
+    if (r && r[0] !== r[1]) {
+      const ink = css('--text-secondary');
+      s('line', { x1: cx, x2: cx, y1: y(r[0]), y2: y(r[1]), stroke: ink, 'stroke-width': 1.5 }, svg);
+      s('line', { x1: cx - 5, x2: cx + 5, y1: y(r[1]), y2: y(r[1]), stroke: ink, 'stroke-width': 1.5 }, svg);
+      s('line', { x1: cx - 5, x2: cx + 5, y1: y(r[0]), y2: y(r[0]), stroke: ink, 'stroke-width': 1.5 }, svg);
+      labelY = Math.min(labelY, y(r[1]) - 6);
+    }
+    const vt = s('text', { x: cx, y: labelY, 'text-anchor': 'middle', class: 'val-text' }, svg);
+    vt.textContent = (cfg.prefix || '') + fmt(totals[i]) + (cfg.suffix || '');
+  });
+}
+
+// ---------- Línea (una serie, con cursor vertical) ----------
+function lineChart(host, cfg) {
+  host.replaceChildren();
+  const W = Math.max(280, host.clientWidth), H = 220;
+  const m = { t: 22, r: 16, b: 34, l: 38 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const svg = s('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': cfg.aria }, host);
+  const ymax = niceMax(Math.max(...cfg.data.map(d => d.v), cfg.ref || 0) * 1.1);
+  const y = v => m.t + ih - (v / ymax) * ih;
+  const x = i => m.l + (iw * i) / (cfg.data.length - 1);
+  for (const t of ticks(ymax)) {
+    s('line', { x1: m.l, x2: W - m.r, y1: y(t), y2: y(t), stroke: t === 0 ? css('--axis') : css('--grid'), 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg);
+    const tx = s('text', { x: m.l - 6, y: y(t) + 4, 'text-anchor': 'end', class: 'axis-text' }, svg); tx.textContent = fmt(t);
+  }
+  if (cfg.ref) {
+    s('line', { x1: m.l, x2: W - m.r, y1: y(cfg.ref), y2: y(cfg.ref), stroke: css('--text-muted'), 'stroke-width': 1 }, svg);
+  }
+  const color = css(cfg.color);
+  const pts = cfg.data.map((d, i) => [x(i), y(d.v)]);
+  const area = `M${pts[0][0]},${y(0)}` + pts.map(p => `L${p[0]},${p[1]}`).join('') + `L${pts[pts.length - 1][0]},${y(0)}Z`;
+  s('path', { d: area, fill: color, opacity: 0.1 }, svg);
+  s('path', { d: 'M' + pts.map(p => p.join(',')).join('L'), fill: 'none', stroke: color, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
+  const hair = s('line', { y1: m.t, y2: m.t + ih, stroke: css('--axis'), 'stroke-width': 1, visibility: 'hidden' }, svg);
+  cfg.data.forEach((d, i) => {
+    const lx = s('text', { x: x(i), y: H - 18, 'text-anchor': 'middle', class: 'axis-text' }, svg); lx.textContent = d.y;
+    if (d.est) { const e = s('text', { x: x(i), y: H - 5, 'text-anchor': 'middle', class: 'axis-text' }, svg); e.textContent = 'est.'; }
+    s('circle', { cx: pts[i][0], cy: pts[i][1], r: 4, fill: color, stroke: css('--surface-1'), 'stroke-width': 2 }, svg);
+    if (i === cfg.data.length - 1 || i === 0) {
+      const vt = s('text', { x: pts[i][0], y: pts[i][1] - 10, 'text-anchor': i === 0 ? 'start' : 'end', class: 'val-text' }, svg);
+      vt.textContent = fmt(d.v) + cfg.suffix;
+    }
+    const bandW = iw / (cfg.data.length - 1);
+    const hit = s('rect', { x: x(i) - bandW / 2, y: m.t, width: bandW, height: ih, fill: 'transparent', class: 'mark', 'aria-label': `${d.y}: ${fmt(d.v)}${cfg.suffix}` }, svg);
+    bindTip(hit, e => {
+      hair.setAttribute('x1', x(i)); hair.setAttribute('x2', x(i)); hair.setAttribute('visibility', 'visible');
+      showTip(e, `${d.y}${d.est ? ' (estimación)' : ''}`, [{ color, value: fmt(d.v) + cfg.suffix, label: cfg.name }]);
+    });
+    hit.addEventListener('pointerleave', () => hair.setAttribute('visibility', 'hidden'));
+    hit.addEventListener('blur', () => hair.setAttribute('visibility', 'hidden'));
+  });
+}
+
+// ---------- Barras horizontales ----------
+function hbarChart(host, cfg) {
+  host.replaceChildren();
+  const W = Math.max(280, host.clientWidth);
+  const rowH = 26, m = { t: 6, r: 72, b: 6, l: Math.min(220, W * 0.45) };
+  const H = m.t + m.b + rowH * cfg.data.length;
+  const iw = W - m.l - m.r;
+  const svg = s('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': cfg.aria }, host);
+  const xmax = niceMax(Math.max(...cfg.data.map(d => d.v)));
+  s('line', { x1: m.l, x2: m.l, y1: m.t, y2: H - m.b, stroke: css('--axis'), 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg);
+  cfg.data.forEach((d, i) => {
+    const yy = m.t + i * rowH, bh = Math.min(16, rowH - 8), by = yy + (rowH - bh) / 2;
+    const lab = s('text', { x: m.l - 8, y: yy + rowH / 2 + 4, 'text-anchor': 'end', class: 'lab-text' }, svg);
+    lab.textContent = d.name;
+    const w = (d.v / xmax) * iw;
+    const key = d.b || d.key;
+    const color = css(BRANCH_COLOR[key]);
+    const p = s('path', { d: barPath(m.l, by, w, bh, 4), fill: color, class: 'mark', 'aria-label': `${d.name}: ${fmtEur(d.v)}` }, svg);
+    const vt = s('text', { x: m.l + w + 6, y: yy + rowH / 2 + 4, class: 'val-text' }, svg); vt.textContent = fmtEur(d.v);
+    bindTip(p, e => showTip(e, d.name, [{ color, value: fmtEur(d.v), label: d.b ? BRANCH_LABEL[d.b] : 'Total desglosado' }], d.basis || d.note));
+  });
+}
+
+// ---------- Calendario (Gantt) ----------
+function gantt(host, rows, colorVar, tableHost) {
+  host.replaceChildren();
+  const W = Math.max(320, host.clientWidth);
+  const x0 = 2026, x1 = 2041, rowH = 26;
+  const m = { t: 24, r: 12, b: 8, l: Math.min(260, W * 0.4) };
+  const H = m.t + m.b + rows.length * rowH, iw = W - m.l - m.r;
+  const svg = s('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Calendario de entregas' }, host);
+  const x = yr => m.l + ((yr - x0) / (x1 - x0)) * iw;
+  for (let yr = x0; yr <= x1 - 1; yr++) {
+    s('line', { x1: x(yr), x2: x(yr), y1: m.t - 4, y2: H - m.b, stroke: css('--grid'), 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg);
+    if ((yr - x0) % 2 === 0 || W > 900) {
+      const t = s('text', { x: x(yr) + (x(yr + 1) - x(yr)) / 2, y: 14, 'text-anchor': 'middle', class: 'axis-text' }, svg); t.textContent = yr;
+    }
+  }
+  [2030, 2035, 2040].forEach(yr => s('line', { x1: x(yr), x2: x(yr), y1: m.t - 4, y2: H - m.b, stroke: css('--axis'), 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg));
+  const color = css(colorVar);
+  rows.forEach((r, i) => {
+    const [name, a, b, est, note] = r;
+    const yy = m.t + i * rowH;
+    const lab = s('text', { x: m.l - 8, y: yy + rowH / 2 + 4, 'text-anchor': 'end', class: 'lab-text' }, svg);
+    lab.textContent = name + (est ? ' (est.)' : '');
+    const bx = x(a) + 1, bw = x(b + 1) - x(a) - 2, bh = 12, by = yy + (rowH - bh) / 2;
+    const rect = s('rect', { x: bx, y: by, width: bw, height: bh, rx: 4, fill: color, opacity: est ? 0.5 : 1, class: 'mark', 'aria-label': `${name}: de ${a} a ${b}` }, svg);
+    bindTip(rect, e => showTip(e, name, [{ color, value: a === b ? `${a}` : `${a}–${b}`, label: est ? 'plazo estimado' : 'plazo de entrega' }], note));
+  });
+  table(tableHost, ['Programa', 'Inicio', 'Fin', 'Base', 'Detalle'], rows.map(r => [r[0], r[1], r[2], r[3] ? 'Estimación' : 'Con fuente', r[4]]));
+}
+
+// ---------- Columnas agrupadas: senda oficial frente al objetivo OTAN ----------
+function compareChart(host, cfg) {
+  host.replaceChildren();
+  const W = Math.max(280, host.clientWidth), H = 230;
+  const m = { t: 24, r: 8, b: 26, l: 52 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const svg = s('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': cfg.aria }, host);
+  const years = [...new Set([...Object.keys(cfg.off), ...Object.keys(cfg.lr)].map(Number))].sort((a, b) => a - b);
+  const lrPts = Object.fromEntries(Object.entries(cfg.lr).map(([y, a]) => [y, { v: a[0], lo: a[1] ?? a[0], hi: a[2] ?? a[0] }]));
+  const all = [...Object.values(cfg.off), ...Object.values(lrPts)];
+  const ymax = niceMax(Math.max(1, ...all.map(p => p.hi)) * 1.12);
+  const y = v => m.t + ih - (v / ymax) * ih;
+  for (const t of ticks(ymax)) {
+    s('line', { x1: m.l, x2: W - m.r, y1: y(t), y2: y(t), stroke: t === 0 ? css('--axis') : css('--grid'), 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg);
+    const tx = s('text', { x: m.l - 6, y: y(t) + 4, 'text-anchor': 'end', class: 'axis-text' }, svg); tx.textContent = fmt(t);
+  }
+  const band = iw / years.length, bw = Math.min(20, (band - 10) / 2);
+  const offC = css('--official'), lrC = css('--lr'), ink = css('--text-secondary');
+  const rng = p => p.lo !== p.hi ? `${fmt(p.lo)}–${fmt(p.hi)}` : fmt(p.v);
+  years.forEach((yr, i) => {
+    const cx = m.l + band * i + band / 2;
+    const lx = s('text', { x: cx, y: H - 8, 'text-anchor': 'middle', class: 'axis-text' }, svg); lx.textContent = yr;
+    const o = cfg.off[yr], l = lrPts[yr];
+    const tipFn = e => showTip(e, `${cfg.title} · ${yr}`, [
+      { color: offC, value: o ? rng(o) : 'n/d', label: 'Senda oficial' + (o && o.est ? ' (estimación)' : '') },
+      { color: lrC, value: l ? rng(l) : 'n/d', label: 'Objetivo OTAN 3,5%' },
+    ], cfg.note);
+    [[o, offC, cx - bw - 1, 'Official'], [l, lrC, cx + 1, 'Target']].forEach(([p, color, x0, who]) => {
+      if (!p) return;
+      const h = y(0) - y(p.v);
+      if (h > 0) s('path', { d: colPath(x0, y(p.v), bw, h, 4), fill: color, opacity: who === 'Official' && p.est ? 0.55 : 1 }, svg);
+      else s('line', { x1: x0, x2: x0 + bw, y1: y(0) - 1, y2: y(0) - 1, stroke: color, 'stroke-width': 2 }, svg);
+      let top = y(p.v);
+      if (p.lo !== p.hi) {
+        const wx = x0 + bw / 2;
+        s('line', { x1: wx, x2: wx, y1: y(p.lo), y2: y(p.hi), stroke: ink, 'stroke-width': 1.5 }, svg);
+        s('line', { x1: wx - 4, x2: wx + 4, y1: y(p.hi), y2: y(p.hi), stroke: ink, 'stroke-width': 1.5 }, svg);
+        s('line', { x1: wx - 4, x2: wx + 4, y1: y(p.lo), y2: y(p.lo), stroke: ink, 'stroke-width': 1.5 }, svg);
+        top = Math.min(top, y(p.hi));
+      }
+      const vt = s('text', { x: x0 + bw / 2, y: top - 5, 'text-anchor': 'middle', class: 'val-text' }, svg);
+      vt.textContent = fmt(p.v);
+    });
+    const hit = s('rect', { x: cx - band / 2 + 2, y: m.t, width: band - 4, height: ih, fill: 'transparent', class: 'mark',
+      'aria-label': `${yr}: senda oficial ${o ? rng(o) : 'ninguna'}, objetivo OTAN 3,5% ${l ? rng(l) : 'ninguno'}` }, svg);
+    bindTip(hit, tipFn);
+  });
+  return years;
+}
+
+// ---------- Renderizado ----------
+let branch = 'army';
+const SERIES_SLOTS = ['--s1', '--s2', '--s3', '--s4'];
+
+function renderSpend() {
+  columnChart(document.getElementById('c-spend'), {
+    title: 'Gasto en defensa', aria: 'Gasto en defensa en millones de euros, 2024 a 2026', x: SPEND.map(d => d.y), hasEst: true, left: 52,
+    series: [{ name: 'millones de €', color: '--s1', d: SPEND.map(d => d.v) }], est: SPEND.map(d => d.est ? 1 : 0), suffix: ' M€',
+  });
+  table(document.getElementById('t-spend'), ['Año', 'Millones de €', 'Fuente'], SPEND.map(d => [d.y, fmt(d.v), d.est ? 'Estimación' : 'Datos OTAN']));
+  lineChart(document.getElementById('c-gdp'), { aria: 'Gasto en defensa en porcentaje del PIB, 2022 a 2026', data: GDP, color: '--s1', suffix: '%', name: 'del PIB', ref: 2 });
+  table(document.getElementById('t-gdp'), ['Año', '% del PIB', 'Fuente'], GDP.map(d => [d.y, fmt(d.v), d.est ? 'Estimación' : 'Datos OTAN']));
+  hbarChart(document.getElementById('c-pembranch'), { aria: 'Valor de los programas de 2025 por rama', data: PEM_BRANCH });
+  table(document.getElementById('t-pembranch'), ['Rama', 'Millones de €', 'Partidas principales'], PEM_BRANCH.map(d => [d.name, fmt(d.v), d.note]));
+  const progHost = document.getElementById('c-programs');
+  progHost.replaceChildren();
+  const lg = document.createElement('div'); lg.className = 'legend';
+  ['Tierra', 'Armada', 'Aire', 'Conjunto'].forEach(b => {
+    const sp = document.createElement('span'); const i = document.createElement('i'); i.style.background = css(BRANCH_COLOR[b]);
+    sp.appendChild(i); sp.appendChild(document.createTextNode(BRANCH_LABEL[b])); lg.appendChild(sp);
+  });
+  progHost.appendChild(lg);
+  const inner = document.createElement('div'); progHost.appendChild(inner);
+  hbarChart(inner, { aria: 'Mayores programas por valor', data: [...PROGRAMS].sort((a, b) => b.v - a.v) });
+  table(document.getElementById('t-programs'), ['Programa', 'Rama', 'Millones de €', 'Base del valor'], PROGRAMS.map(d => [d.name, BRANCH_LABEL[d.b], fmt(d.v), d.basis]));
+  compareChart(document.getElementById('c-eur'), {
+    title: 'Gasto en defensa, millones de €', aria: 'Gasto en defensa en millones de euros: senda oficial frente al objetivo OTAN del 3,5% del PIB, 2026 y 2035',
+    off: { 2026: { v: 35400, lo: 35400, hi: 35400, est: true }, 2035: { v: 51600, lo: 48200, hi: 55500, est: true } },
+    lr: { 2026: [62000], 2035: [85900, 80400, 92600] },
+    note: 'Oficial: 2,0% del PIB en 2026 y 2,1% en 2035. Objetivo básico de la OTAN: 3,5%. PIB: 1,772 billones € (2026) y 2,455 billones € (2035, escenario base; entre 2,296 y 2,645 billones €).',
+  });
+  table(document.getElementById('t-eur'), ['', 'PIB', 'Senda oficial', 'Objetivo OTAN 3,5%', 'Diferencia'], [
+    ['2026', '1,772 billones €', '35.400 M€ (2,0%)', '62.000 M€', '+26.600 M€'],
+    ['2035, escenario base', '2,455 billones €', '51.600 M€ (2,1%)', '85.900 M€', '+34.300 M€'],
+    ['2035, crecimiento lento', '2,296 billones €', '48.200 M€', '80.400 M€', '+32.200 M€'],
+    ['2035, crecimiento rápido', '2,645 billones €', '55.500 M€', '92.600 M€', '+37.100 M€'],
+  ]);
+}
+
+function renderBranch() {
+  const B = BRANCHES[branch];
+  document.querySelectorAll('[data-branch]').forEach(b => b.setAttribute('aria-pressed', b.dataset.branch === branch));
+  document.getElementById('branchSub').textContent = B.sub;
+  const tiles = document.getElementById('branchTiles'); tiles.replaceChildren();
+  B.tiles.forEach(([l, v, n]) => {
+    const t = document.createElement('div'); t.className = 'tile';
+    [['label', l], ['value', v], ['note', n]].forEach(([c, txt]) => { const d = document.createElement('div'); d.className = c; d.textContent = txt; t.appendChild(d); });
+    tiles.appendChild(t);
+  });
+  const grid = document.getElementById('branchCharts'); grid.replaceChildren();
+  B.cats.forEach(c => {
+    const card = document.createElement('div'); card.className = 'card';
+    const h = document.createElement('h3'); h.textContent = c.title; card.appendChild(h);
+    const series = c.series.map(([name, d], k) => ({ name, d, color: SERIES_SLOTS[k] }));
+    if (series.length > 1) {
+      const lg = document.createElement('div'); lg.className = 'legend';
+      series.forEach(sr => { const sp = document.createElement('span'); const i = document.createElement('i'); i.style.background = css(sr.color); sp.appendChild(i); sp.appendChild(document.createTextNode(sr.name)); lg.appendChild(sp); });
+      card.appendChild(lg);
+    } else {
+      const sub = document.createElement('div'); sub.className = 'muted'; sub.textContent = series[0].name; card.appendChild(sub);
+    }
+    const ch = document.createElement('div'); ch.className = 'chart'; card.appendChild(ch);
+    const nt = document.createElement('div'); nt.className = 'note-line'; nt.textContent = c.note; card.appendChild(nt);
+    const tb = document.createElement('div'); card.appendChild(tb);
+    grid.appendChild(card);
+    columnChart(ch, { title: c.title, aria: `${c.title}, totales proyectados de 2026 a 2040`, x: YEARS, series, est: c.est, range: c.range, hasEst: true });
+    const rows = series.map(sr => [sr.name, ...sr.d.map(fmt)]);
+    rows.push(['Total', ...YEARS.map((_, i) => series.every(sr => sr.d[i] == null) ? 'n/d' : fmt(series.reduce((a, sr) => a + (sr.d[i] ?? 0), 0)))]);
+    rows.push(['Rango', ...YEARS.map((_, i) => c.range[i] ? `${fmt(c.range[i][0])}–${fmt(c.range[i][1])}` : '')]);
+    rows.push(['Base', ...c.est.map(e => e ? 'Estimación' : 'Con fuente')]);
+    table(tb, ['', ...YEARS], rows);
+  });
+  const colorVar = { army: '--s1', navy: '--s2', air: '--s3' }[branch];
+  gantt(document.getElementById('c-gantt'), GANTT[branch], colorVar, document.getElementById('t-gantt'));
+}
+
+function renderAll() { renderSpend(); renderBranch(); }
+
+document.querySelectorAll('[data-branch]').forEach(b => b.addEventListener('click', () => { branch = b.dataset.branch; renderBranch(); }));
+document.getElementById('themeBtn').addEventListener('click', () => {
+  const root = document.documentElement;
+  const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme = dark ? 'light' : 'dark';
+  renderAll();
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', renderAll);
+let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(renderAll, 120); });
+renderAll();
+</script>
+</body>
+</html>
